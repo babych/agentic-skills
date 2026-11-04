@@ -1,4 +1,4 @@
-# 🌌 Custom Antigravity Skills Collection
+# 🚀 Custom Antigravity Skills Collection
 
 Curated collection of custom production-grade **Google Antigravity** skills, remote GPU orchestration workflows, and publishing automation tools.
 
@@ -7,40 +7,33 @@ Curated collection of custom production-grade **Google Antigravity** skills, rem
 
 ---
 
-## 📚 Custom Skills Catalog
+## 📦 Custom Skills Catalog
 
 | Skill Name | Description | Category |
 |---|---|---|
-| [**`skill-creator`**](./skills/skill-creator) | Complete engineering framework for architecting, structuring, and testing new Antigravity skills. | Meta / Dev |
+| [**`qwen-gpu-studio`**](./skills/qwen-gpu-studio) | Unified Qwen 2.1 DiT editing & inpaint pipeline, 100% facial identity anchoring, anti-grain VAE, ComfyUI API, and remote GPU (`itx` RX 6600 XT / Cloud L40S) orchestration. | AI Pipeline & GPU |
+| [**`static-pwa-edge-skill`**](./skills/static-pwa-edge-skill) | Autonomous Progressive Web Apps (PWA) with Cloudflare Pages/D1, Web Push notifications, i18n, and offline cache. | Web & Cloud |
+| [**`zero-hop-code-skill`**](./skills/zero-hop-code-skill) | Zero-dependency, zero-VRAM BM25/IDF AST-boundary codebase search engine for single-hop edits. | Developer Tools |
 | [**`windows-node-ssh-bootstrap`**](./skills/windows-node-ssh-bootstrap) | Automated OpenSSH server setup, passwordless key auth, and firewall rules for Windows GPU nodes. | Infrastructure |
-| [**`remote-gpu-node`**](./skills/remote-gpu-node) | Connect, deploy, monitor, and execute AI models on headless AMD/Nvidia GPU nodes over SSH. | Infrastructure |
-| [**`auto-inpaint-directml`**](./skills/auto-inpaint-directml) | DirectML anatomical inpainting pipeline with strict face guard and 3D depth guidance on AMD GPUs. | AI Pipeline |
-| [**`qwen-image-editor`**](./skills/qwen-image-editor) | DiT flow-matching image editing with Qwen-Image-Edit via ComfyUI. | AI Pipeline |
-| [**`qwen-image-remote-setup`**](./skills/qwen-image-remote-setup) | Hardware-specific deployment guides for running Qwen DiT models on AMD Radeon & Nvidia GPUs. | AI Pipeline |
 | [**`book-translator-publisher`**](./skills/book-translator-publisher) | End-to-end publishing pipeline for books using Typst, Gemini Flash Lite, and Gemini Vision. | Publishing |
+
+*(Note: `skill-creator` is built directly into Antigravity via `agy-customizations`).*
 
 ---
 
-## 🚀 How to Install & Use Skills
+## 🛠️ How to Install & Use Skills
 
 ### Option A: Install to a Specific Workspace
 Clone or copy the desired skill folder into your project's `.agents/skills/` directory:
 ```bash
 mkdir -p .agents/skills
-cp -r /path/to/antigravity-skills/skills/windows-node-ssh-bootstrap .agents/skills/
+cp -r /path/to/antigravity-skills/skills/qwen-gpu-studio .agents/skills/
 ```
 
 ### Option B: Install Globally (Available in all projects)
 Copy the skill folder to your user's global Antigravity configuration directory:
 * **Windows:** `%USERPROFILE%\.gemini\antigravity\skills\`
 * **Linux / macOS:** `~/.gemini/antigravity/skills/`
-
----
-
-## 🛠️ Contributing New Skills
-1. Fork this repository.
-2. Follow the [**`skill-creator`**](./skills/skill-creator) standard to create your new skill directory with a valid `SKILL.md`.
-3. Open a Pull Request!
 
 ---
 
