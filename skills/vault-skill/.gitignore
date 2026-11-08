@@ -1,0 +1,24 @@
+# Security: Never commit encrypted vault files, PIN metadata, or secrets
+vault.enc
+vault.enc.tmp
+auth_pin.json
+*.enc
+*.key
+*.pem
+*.secret
+.env*
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+
+# OS and Editor metadata
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
