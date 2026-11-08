@@ -21,23 +21,31 @@ This skill defines how to write documentation, READMEs, changelogs, commit messa
 
 2. **Simple Words for Non-Native English Readers**
    - Many developers reading the docs are not native English speakers.
-   - Prefer simple, concrete words over academic or high-register vocabulary:
+   - Prefer simple, concrete words over academic, textbook, or high-register vocabulary:
      - Use *call* or *use* instead of *leverage* / *utilize*.
-     - Use *raw pixel bytes* instead of *decompressed packed buffer*.
-     - Use *creates a texture from bytes* instead of *initiates GPU upload pipeline*.
-     - Use *test data* or *fake data* instead of *synthetic sine cluster*.
-     - Use *matrix data* instead of *sparse CSR/Yale notation structure*.
+     - Use *raw bytes* instead of *decompressed packed buffer payload*.
+     - Use *send to server* / *upload* instead of *initiate transport egress pipeline*.
+     - Use *test data* or *dummy data* instead of *synthetically generated stochastic fixtures*.
+     - Use *grid* or *table* instead of *multi-dimensional indexed tensor array structure*.
+     - Use *fix crash on null* instead of *mitigate anomalous dereferencing faults*.
 
 3. **Anti-AI Formatting Patterns**
-   - **No nested bold-colon bullet spam**: Avoid `1. **Feature:** Description of feature... 2. **Next Feature:**...`
-   - **No preamble or recap fluff**: Cut sentences like *"In order to provide developers with a streamlined experience..."* or *"By leveraging this approach, users can effortlessly..."*
+   - **No nested bold-colon bullet spam**: Avoid repetitive mechanical lists like:
+     - `**Feature:** Description...`
+     - `**Benefit:** Description...`
+     - `**Capability:** Description...`
+   - **No preamble or recap fluff**: Cut sentences like:
+     - *"In order to provide developers with a streamlined experience..."*
+     - *"By leveraging this cutting-edge approach, users can effortlessly..."*
+     - *"It is important to note that..."*
    - Keep introductory sentences to 1 or 2 lines maximum.
 
-4. **Concrete Code Symbols & Exact Paths**
-   - Always reference the real file paths (`shaders/prpd_from_atlas.frag`), method names (`convertYaleToFlat()`), and variables rather than vague abstractions.
-   - Code examples must be copy-paste ready, stateful where necessary (avoiding naive builder traps), and reflect how the project actually uses the API.
+4. **Concrete Code Symbols & Exact References**
+   - Always reference exact file paths, real method/function names, and flags rather than hand-waving abstractions.
+   - Code snippets must be copy-paste ready, stateful where necessary, and free of unnecessary pseudo-code placeholders.
 
-5. **Changelog / Release Notes Standard**
-   - Imperative mood (*"Fix...", "Add...", "Clean up..."*).
-   - Use the wording from the actual ticket or bug report whenever possible, rather than rewriting it with fancy synonyms.
-   - Include the exact formula, variable, or error when explaining a fix (e.g. `(u_colormap + 0.5) / 256.0`, `FlutterFragCoord().xy`, guard `log2(0)`).
+5. **Changelog / PR / Commit Message Standards**
+   - Imperative mood (*"Fix...", "Add...", "Clean up...", "Drop..."*).
+   - State the problem, the root cause, and the exact solution in 1–3 short sentences.
+   - Use the wording from the actual ticket or error output whenever possible, rather than inventing elaborate synonyms.
+   - Include the exact variable name, config flag, status code, or formula when explaining a fix.
