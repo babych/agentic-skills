@@ -64,9 +64,15 @@ If specific credentials are needed from the vault:
 
 ### Step 1: Autonomous Content Generation
 Generate complete bilingual or 5-language story payloads:
-- **Languages**: Ukrainian (`uk`), English (`en`), German (`de`), Japanese (`ja`), Spanish (`es`).
+- **Languages**: Ukrainian (`uk`), English (`en`), Polish (`pl`), German (`de`), Spanish (`es`).
 - **Fields**: `slug`, `title`, `summary`, `content_md`, `seo_title`, `seo_description`, `tags`, `social_hook`.
-- **Image**: High-res editorial photo with 1280px optimized thumbnail.
+- **User-Provided Original Visuals (STRICT RULE)**:
+  - If the user provides an image, infographic, or map screenshot, **ALWAYS use it as the primary evidence**:
+    1. Save the image to `public/images/` and host it directly on the site CDN.
+    2. Set `image_url` of the article to the authentic provided image/crop.
+    3. **Embed the image directly into `content_md`** across all languages (`![Description](/images/...)`) with an explanatory caption.
+  - Never replace user-provided authentic maps/evidence with generic stock photos from Wikimedia.
+- **Image Fallback**: If no user image is provided, use high-res editorial photo with 1280px optimized thumbnail.
 
 ### Step 2: Cloudflare D1 Database Insertion
 Insert into `pulsepress-news-db` using `npx wrangler d1 execute`:
