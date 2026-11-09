@@ -49,7 +49,7 @@ Run the bundled script `scripts/direct_social_broadcast.py`:
 ```powershell
 python C:\Users\Dmytro\source\repos\Github\agentic-skills\skills\zelta-publisher-skill\scripts\direct_social_broadcast.py `
   --text "🔥 Президент США оголосив про новий пакет допомоги...`n`nДеталі..." `
-  --image-url "https://example.com/photo.jpg"
+  --image-path "C:\path\to\local_image.jpg" # або --image-url "https://example.com/photo.jpg"
 ```
 
 If specific credentials are needed from the vault:
