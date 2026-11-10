@@ -20,8 +20,30 @@ def load_slowpoque_credentials():
             return None
     return None
 
+def strip_link_blocks(text: str) -> str:
+    if not text:
+        return ""
+    lines = text.split("\n")
+    clean_lines = []
+    for line in lines:
+        stripped = line.strip()
+        lower = stripped.lower()
+        if stripped.startswith("http://") or stripped.startswith("https://") or stripped.startswith("👉"):
+            continue
+        if any(domain in lower for domain in ["zeltanews.com", "t.me/", "threads.net", "facebook.com", "bsky.app"]):
+            continue
+        if any(lower.startswith(prefix) for prefix in ["посилання", "читати", "деталі", "детальніше", "повний аналіз", "аналітика", "read more", "read full"]):
+            continue
+        clean_lines.append(line)
+    result = "\n".join(clean_lines)
+    import re
+    result = re.sub(r'https?://\S+', '', result)
+    result = re.sub(r'\[([^\]]+)\]\([^)]+\)', r'\1', result)
+    result = re.sub(r'\n{3,}', '\n\n', result)
+    return result.strip()
+
 def publish_to_threads_direct(token: str, user_id: str, text: str, image_url: str = None) -> dict:
-    safe_text = text[:500]
+    safe_text = strip_link_blocks(text)[:500]
     create_url = f"https://graph.threads.net/v1.0/{user_id}/threads"
     publish_url = f"https://graph.threads.net/v1.0/{user_id}/threads_publish"
 
@@ -84,12 +106,15 @@ def broadcast_via_worker(
     bluesky_text: str = None,
     worker_url: str = DEFAULT_WORKER_ENDPOINT
 ) -> dict:
+    clean_text = strip_link_blocks(text)
+    clean_threads = strip_link_blocks(threads_text or text)[:490]
+    clean_bluesky = strip_link_blocks(bluesky_text or text)[:290]
     payload = {
-        "text": text,
+        "text": clean_text,
         "image_url": image_url,
         "image_base64": image_base64,
-        "threads_text": threads_text or text[:490],
-        "bluesky_text": bluesky_text or text[:290]
+        "threads_text": clean_threads,
+        "bluesky_text": clean_bluesky
     }
     req = urllib.request.Request(
         worker_url,

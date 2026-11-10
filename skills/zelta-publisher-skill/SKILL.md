@@ -9,6 +9,16 @@ Autonomous publishing intelligence for **Zelta News** (`https://zeltanews.com`) 
 
 ---
 
+## 🚫 STRICT ZERO-LINKS POLICY ACROSS ALL SOCIAL NETWORKS
+
+**MANDATORY ALGORITHMIC REACH STANDARD**:
+- **NEVER** include outbound links, URLs, domain mentions (e.g. `zeltanews.com`), or CTA link blocks (e.g. `👉 Читати статтю...`, `Аналітика — на zeltanews.com`) in any social post across **Threads, Telegram, Bluesky, or Facebook**.
+- Social media algorithms (especially Meta Threads & Facebook) heavily penalize posts with links, cutting reach by 70–90%.
+- Every social publication must be 100% native and self-contained: title + hook + concrete numbers + provocative debate question + tags/image.
+- The link-block scrubber (`stripAllLinkBlocks` / `strip_link_blocks`) is permanently enforced in the worker and broadcast scripts.
+
+---
+
 ## 🧭 Operational Modes
 
 When the user provides a news snippet, tweet, screenshot, or URL, evaluate the intent and select the appropriate mode:
@@ -18,21 +28,65 @@ When the user provides a news snippet, tweet, screenshot, or URL, evaluate the i
                            │
        ┌───────────────────┴───────────────────┐
        ▼                                       ▼
-[Mode 1: Short Take / X Quote]      [Mode 2: Editorial Priority Queue]
-- User pastes a tweet, quote,       - User provides topic, prompt, or
-  short update, or says "пости        request for zeltanews.com
-  без лінку / короткий твіт"        - Enqueues to D1 `editorial_queue`
-- NO website article created        - Consumed on NEXT HOURLY CRON run
-- Direct broadcast across social      instead of generic internet news
-  channels for viral organic reach  - 5-language story + Google Indexing
+[Mode 1: Editorial Priority Queue]   [Mode 2: Urgent Immediate Broadcast]
+- PRIMARY & DEFAULT WORKFLOW         - ONLY when explicitly instructed:
+- User provides topic, prompt, link,   "терміново", "запости прямо зараз",
+  text snippet, or request             "без очікування / без черги"
+- Enqueues to D1 `editorial_queue`   - Skips queue and immediately broadcasts
+- Consumed on NEXT HOURLY CRON run     to social media without site article
+  instead of generic RSS news
+- 5-language story + Google Indexing
+  + Multi-channel social broadcast
 ```
 
 ---
 
-## 🚀 Mode 1: Short Take / Twitter / X Quote (No Site Link)
+## 📰 Mode 1: Editorial Priority Queue (DEFAULT WORKFLOW)
 
 ### Core Principle
-Social platform algorithms (Threads, Bluesky, Facebook) significantly suppress reach when a post contains external outbound links. Mode 1 publishes pure native content with zero outbound links, maximizing impressions and virality.
+By default, the Cloudflare Worker runs an autonomous cron job every hour (`0 * * * *`) that picks generic news from RSS feeds.
+Whenever the user invokes `/zelta-publisher-skill` with a story topic, URL, or news snippet, **ALWAYS add it to the Editorial Priority Queue** (`editorial_queue` in D1 `pulsepress-news-db`).
+
+On the next cron trigger:
+1. The worker detects the pending queue item before any RSS feeds.
+2. It generates a full-length, authoritative 5-language investigation (`uk`, `en`, `pl`, `de`, `es`) with concrete numbers, facts, and structure.
+3. Media is attached (or Wikimedia resolved).
+4. Persisted to D1 and marked `completed`.
+5. Google Indexing API pinged (< 1s) and syndicated across social channels (Telegram, Threads, Bluesky, Facebook).
+
+### Enqueue Execution
+Run `scripts/enqueue_editorial.py`:
+
+```powershell
+python C:\Users\Dmytro\source\repos\Github\agentic-skills\skills\zelta-publisher-skill\scripts\enqueue_editorial.py `
+  --prompt "В Україні медіанний щомісячний платіж за іпотекою у 2026 році становить 13 000 – 18 300 грн. Навіщо аренди по 30к?" `
+  --notes "єОселя 3% і 7%, порівняння витрат на оренду та володіння житлом" `
+  --category "ukraine" `
+  --importance 88
+```
+
+Supported categories: `ukraine`, `world`, `tech`, `celebs`, `culture`, `sports`, `science`.
+
+To view current queue status:
+```powershell
+python C:\Users\Dmytro\source\repos\Github\agentic-skills\skills\zelta-publisher-skill\scripts\enqueue_editorial.py --list
+```
+
+To update an existing item (e.g. change category to celebs, reset to pending):
+```powershell
+python C:\Users\Dmytro\source\repos\Github\agentic-skills\skills\zelta-publisher-skill\scripts\enqueue_editorial.py `
+  --update-id "<ID>" `
+  --new-category "celebs" `
+  --new-status "pending"
+```
+
+---
+
+## 🚀 Mode 2: Urgent Immediate Social Broadcast (Only on Explicit Request)
+
+### Core Principle
+Used **ONLY** when the user explicitly commands immediate publication without waiting for the cron ("терміново", "запости зараз", "без черги").
+Social platform algorithms (Threads, Bluesky, Facebook) significantly suppress reach when a post contains external outbound links. Mode 2 publishes pure native content with zero outbound links, maximizing impressions and virality.
 
 ### Formatting Guidelines
 - **Headline / Hook**: 1 punchy line in bold (Telegram Markdown: `*...*`).
@@ -47,44 +101,7 @@ Run the bundled script `scripts/direct_social_broadcast.py`:
 ```powershell
 python C:\Users\Dmytro\source\repos\Github\agentic-skills\skills\zelta-publisher-skill\scripts\direct_social_broadcast.py `
   --text "🔥 Президент США оголосив про новий пакет допомоги...`n`nДеталі..." `
-  --image-path "C:\path\to\local_image.jpg" # або --image-url "https://example.com/photo.jpg"
-```
-
----
-
-## 📰 Mode 2: Editorial Priority Queue (Cron-Driven Replacement of Generic News)
-
-### Core Principle
-By default, the Cloudflare Worker runs an autonomous cron job every hour (`0 * * * *`) that picks generic news from RSS feeds.
-When the user invokes `/zelta-publisher-skill` with a story topic or question, it adds it to the **Editorial Priority Queue** (`editorial_queue` in D1).
-
-On the next cron trigger:
-1. The worker detects the pending queue item before any RSS feeds.
-2. It generates a full-length, authoritative 5-language investigation (`uk`, `en`, `pl`, `de`, `es`) with concrete numbers, facts, and structure.
-3. Media is attached (or Wikimedia resolved).
-4. Persisted to D1 and marked `completed`.
-5. Google Indexing API pinged (< 1s) and syndicated across social channels.
-
-### Enqueue Execution
-Run `scripts/enqueue_editorial.py`:
-
-```powershell
-python C:\Users\Dmytro\source\repos\Github\agentic-skills\skills\zelta-publisher-skill\scripts\enqueue_editorial.py `
-  --prompt "В Україні медіанний щомісячний платіж за іпотекою у 2026 році становить 13 000 – 18 300 грн. Навіщо аренди по 30к?" `
-  --notes "єОселя 3% і 7%, порівняння витрат на оренду та володіння житлом" `
-  --category "ukraine" `
-  --importance 88
-```
-
-To view current queue status:
-```powershell
-python C:\Users\Dmytro\source\repos\Github\agentic-skills\skills\zelta-publisher-skill\scripts\enqueue_editorial.py --list
-```
-
-If specific credentials are needed from the vault:
-```powershell
-# Retrieve tokens via vault-skill if required:
-# python C:\Users\Dmytro\.gemini\config\skills\vault-skill\vault_manager.py describe <KEY>
+  --image-path "C:\path\to\local_image.jpg"
 ```
 
 ---

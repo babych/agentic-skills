@@ -53,21 +53,43 @@ def list_queue(status: str = None) -> list:
     res = run_d1_query(sql)
     return res.get("results", [])
 
+def update_item(item_id: str, category: str = None, status: str = None) -> None:
+    updates = []
+    if category:
+        updates.append(f"category = '{category}'")
+    if status:
+        updates.append(f"status = '{status}'")
+        if status == "pending":
+            updates.append("error_message = NULL")
+            updates.append("processed_at = NULL")
+    if not updates:
+        return
+    sql = f"UPDATE editorial_queue SET {', '.join(updates)} WHERE id = '{item_id}';"
+    run_d1_query(sql)
+
 def main():
     parser = argparse.ArgumentParser(description="Zelta News Editorial Priority Queue Manager")
     parser.add_argument("--prompt", help="Editorial prompt or topic angle to enqueue")
     parser.add_argument("--notes", help="Additional background notes, data, quotes or context")
     parser.add_argument("--media-url", help="Direct URL or site path to primary hero image")
-    parser.add_argument("--category", default="ukraine", help="Story category (ukraine, tech, world, etc.)")
+    parser.add_argument("--category", default="ukraine", help="Story category (ukraine, tech, world, celebs, etc.)")
     parser.add_argument("--importance", type=int, default=85, help="Importance score (1-100)")
     parser.add_argument("--list", action="store_true", help="List recent editorial queue items")
     parser.add_argument("--status", help="Filter --list by status (pending, processing, completed, failed)")
+    parser.add_argument("--update-id", help="Item ID to update")
+    parser.add_argument("--new-category", help="New category for --update-id")
+    parser.add_argument("--new-status", help="New status for --update-id (e.g. pending)")
     args = parser.parse_args()
 
     if args.list:
         items = list_queue(args.status)
         print(f"\nEditorial Queue ({len(items)} items):")
         print(json.dumps(items, indent=2, ensure_ascii=False))
+        return
+
+    if args.update_id:
+        update_item(args.update_id, category=args.new_category, status=args.new_status)
+        print(f"Updated item {args.update_id}: category={args.new_category}, status={args.new_status}")
         return
 
     if not args.prompt:
