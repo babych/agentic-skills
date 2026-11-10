@@ -18,15 +18,13 @@ When the user provides a news snippet, tweet, screenshot, or URL, evaluate the i
                            │
        ┌───────────────────┴───────────────────┐
        ▼                                       ▼
-[Mode 1: Short Take / X Quote]      [Mode 2: Full Newsroom Story]
-- User pastes a tweet, quote,       - User provides long-form text,
-  short update, or says "пости        press release, or requests a full
-  без лінку / короткий твіт"          article for zeltanews.com
-- NO website article created        - Generates 5-language story
-- NO site link attached             - Writes to Cloudflare D1 DB
-- Direct broadcast across social    - Dispatches Google Indexing API
-  channels for maximum algorithm    - Syndicates with first-comment
-  organic reach (zero downrank)       link placement
+[Mode 1: Short Take / X Quote]      [Mode 2: Editorial Priority Queue]
+- User pastes a tweet, quote,       - User provides topic, prompt, or
+  short update, or says "пости        request for zeltanews.com
+  без лінку / короткий твіт"        - Enqueues to D1 `editorial_queue`
+- NO website article created        - Consumed on NEXT HOURLY CRON run
+- Direct broadcast across social      instead of generic internet news
+  channels for viral organic reach  - 5-language story + Google Indexing
 ```
 
 ---
@@ -50,6 +48,37 @@ Run the bundled script `scripts/direct_social_broadcast.py`:
 python C:\Users\Dmytro\source\repos\Github\agentic-skills\skills\zelta-publisher-skill\scripts\direct_social_broadcast.py `
   --text "🔥 Президент США оголосив про новий пакет допомоги...`n`nДеталі..." `
   --image-path "C:\path\to\local_image.jpg" # або --image-url "https://example.com/photo.jpg"
+```
+
+---
+
+## 📰 Mode 2: Editorial Priority Queue (Cron-Driven Replacement of Generic News)
+
+### Core Principle
+By default, the Cloudflare Worker runs an autonomous cron job every hour (`0 * * * *`) that picks generic news from RSS feeds.
+When the user invokes `/zelta-publisher-skill` with a story topic or question, it adds it to the **Editorial Priority Queue** (`editorial_queue` in D1).
+
+On the next cron trigger:
+1. The worker detects the pending queue item before any RSS feeds.
+2. It generates a full-length, authoritative 5-language investigation (`uk`, `en`, `pl`, `de`, `es`) with concrete numbers, facts, and structure.
+3. Media is attached (or Wikimedia resolved).
+4. Persisted to D1 and marked `completed`.
+5. Google Indexing API pinged (< 1s) and syndicated across social channels.
+
+### Enqueue Execution
+Run `scripts/enqueue_editorial.py`:
+
+```powershell
+python C:\Users\Dmytro\source\repos\Github\agentic-skills\skills\zelta-publisher-skill\scripts\enqueue_editorial.py `
+  --prompt "В Україні медіанний щомісячний платіж за іпотекою у 2026 році становить 13 000 – 18 300 грн. Навіщо аренди по 30к?" `
+  --notes "єОселя 3% і 7%, порівняння витрат на оренду та володіння житлом" `
+  --category "ukraine" `
+  --importance 88
+```
+
+To view current queue status:
+```powershell
+python C:\Users\Dmytro\source\repos\Github\agentic-skills\skills\zelta-publisher-skill\scripts\enqueue_editorial.py --list
 ```
 
 If specific credentials are needed from the vault:
