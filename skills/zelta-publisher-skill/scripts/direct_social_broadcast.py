@@ -60,7 +60,21 @@ def publish_to_threads_direct(token: str, user_id: str, text: str, image_url: st
             with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
                 container_id = data.get("id")
-                time.sleep(2)
+                if container_id:
+                    for _ in range(6):
+                        time.sleep(2)
+                        status_url = f"https://graph.threads.net/v1.0/{container_id}?fields=status,error_message&access_token={token}"
+                        try:
+                            s_req = urllib.request.Request(status_url)
+                            with urllib.request.urlopen(s_req, timeout=15) as s_resp:
+                                s_data = json.loads(s_resp.read().decode("utf-8"))
+                                if s_data.get("status") == "FINISHED":
+                                    break
+                                if s_data.get("status") == "ERROR":
+                                    container_id = None
+                                    break
+                        except Exception:
+                            pass
         except Exception:
             container_id = None
 
