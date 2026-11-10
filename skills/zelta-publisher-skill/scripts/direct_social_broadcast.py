@@ -30,9 +30,9 @@ def strip_link_blocks(text: str) -> str:
         lower = stripped.lower()
         if stripped.startswith("http://") or stripped.startswith("https://") or stripped.startswith("👉"):
             continue
-        if any(domain in lower for domain in ["zeltanews.com", "t.me/", "threads.net", "facebook.com", "bsky.app"]):
+        if any(domain in lower for domain in ["zeltanews", "t.me/", "threads.net", "facebook.com", "bsky.app", "instagram.com", "twitter.com", "x.com"]):
             continue
-        if any(lower.startswith(prefix) for prefix in ["посилання", "читати", "деталі", "детальніше", "повний аналіз", "аналітика", "read more", "read full"]):
+        if any(lower.startswith(prefix) for prefix in ["посилання", "читати", "деталі", "детальніше", "повний аналіз", "аналітика", "мапа", "синоптична мапа", "дивіться", "джерело", "read more", "read full"]):
             continue
         clean_lines.append(line)
     result = "\n".join(clean_lines)
