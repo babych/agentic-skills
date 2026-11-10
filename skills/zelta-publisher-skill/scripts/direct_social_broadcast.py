@@ -1,12 +1,80 @@
 import os
 import sys
 import json
+import time
 import base64
 import argparse
 import urllib.request
 import urllib.error
+import urllib.parse
 
 DEFAULT_WORKER_ENDPOINT = "https://ai-news-portal.memory1024.workers.dev/broadcast-short"
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "slowpoque_config.json")
+
+def load_slowpoque_credentials():
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            return None
+    return None
+
+def publish_to_threads_direct(token: str, user_id: str, text: str, image_url: str = None) -> dict:
+    safe_text = text[:500]
+    create_url = f"https://graph.threads.net/v1.0/{user_id}/threads"
+    publish_url = f"https://graph.threads.net/v1.0/{user_id}/threads_publish"
+
+    container_id = None
+    if image_url:
+        params = urllib.parse.urlencode({
+            "media_type": "IMAGE",
+            "image_url": image_url,
+            "text": safe_text,
+            "access_token": token
+        })
+        req = urllib.request.Request(create_url, data=params.encode("utf-8"), method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                container_id = data.get("id")
+                time.sleep(2)
+        except Exception:
+            container_id = None
+
+    if not container_id:
+        params = urllib.parse.urlencode({
+            "media_type": "TEXT",
+            "text": safe_text,
+            "access_token": token
+        })
+        req = urllib.request.Request(create_url, data=params.encode("utf-8"), method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                container_id = data.get("id")
+                time.sleep(2)
+        except urllib.error.HTTPError as e:
+            return {"ok": False, "error": e.read().decode("utf-8")}
+        except Exception as e:
+            return {"ok": False, "error": str(e)}
+
+    if not container_id:
+        return {"ok": False, "error": "Failed to create Threads container"}
+
+    pub_params = urllib.parse.urlencode({
+        "creation_id": container_id,
+        "access_token": token
+    })
+    pub_req = urllib.request.Request(publish_url, data=pub_params.encode("utf-8"), method="POST")
+    try:
+        with urllib.request.urlopen(pub_req, timeout=30) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            return {"ok": True, "id": data.get("id")}
+    except urllib.error.HTTPError as e:
+        return {"ok": False, "error": e.read().decode("utf-8")}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 def broadcast_via_worker(
     text: str,
@@ -47,6 +115,7 @@ def main():
     parser.add_argument("--threads-text", default=None, help="Optional custom text for Threads (<500 chars)")
     parser.add_argument("--bluesky-text", default=None, help="Optional custom text for Bluesky (<300 chars)")
     parser.add_argument("--worker-url", default=DEFAULT_WORKER_ENDPOINT, help="Cloudflare Worker broadcast endpoint")
+    parser.add_argument("--target", choices=["all", "slowpoque", "main"], default="all", help="Target profile: slowpoque (manual analysis), main (default worker channels), or all")
     args = parser.parse_args()
 
     image_base64 = None
@@ -57,17 +126,39 @@ def main():
         with open(args.image_path, "rb") as f:
             image_base64 = base64.b64encode(f.read()).decode("utf-8")
 
-    print(f"Broadcasting to Zelta News social network via {args.worker_url}...")
-    res = broadcast_via_worker(
-        text=args.text,
-        image_url=args.image_url,
-        image_base64=image_base64,
-        threads_text=args.threads_text,
-        bluesky_text=args.bluesky_text,
-        worker_url=args.worker_url
-    )
+    results = {}
+
+    if args.target in ["all", "main"]:
+        print(f"Broadcasting to main Zelta News social network via {args.worker_url}...")
+        worker_res = broadcast_via_worker(
+            text=args.text,
+            image_url=args.image_url,
+            image_base64=image_base64,
+            threads_text=args.threads_text,
+            bluesky_text=args.bluesky_text,
+            worker_url=args.worker_url
+        )
+        results["main_channels"] = worker_res
+
+    if args.target in ["all", "slowpoque"]:
+        creds = load_slowpoque_credentials()
+        if creds and creds.get("access_token") and creds.get("user_id"):
+            print("Publishing analytical take to @slowpoque618 on Threads...")
+            th_text = args.threads_text or args.text
+            th_res = publish_to_threads_direct(
+                token=creds["access_token"],
+                user_id=creds["user_id"],
+                text=th_text,
+                image_url=args.image_url
+            )
+            results["slowpoque_threads"] = th_res
+        else:
+            if args.target == "slowpoque":
+                print("Error: slowpoque credentials not found in slowpoque_config.json", file=sys.stderr)
+                sys.exit(1)
+
     print("\n--- BROADCAST RESULT ---")
-    print(json.dumps(res, indent=2, ensure_ascii=False))
+    print(json.dumps(results, indent=2, ensure_ascii=False))
 
 if __name__ == "__main__":
     main()
