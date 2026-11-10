@@ -127,3 +127,32 @@ Notify Googlebot in < 1s using the service account WebCrypto JWT:
 1. **Never print plain-text tokens** in chat, summaries, or commit logs.
 2. Store all persistent keys in `vault-skill` or Cloudflare Worker environment secrets.
 3. Keep changes atomic and test all social endpoints before mass distribution.
+
+---
+
+## 🤖 Mode 3: Daily Slowpoque Threads Autopilot (@slowpoque618)
+
+### Core Principle
+Once per 24 hours, selects the top-impact story from the primary account (Zelta News D1 database), generates a thoughtful, dry analytical rewrite tailored for Threads, and publishes it with zero outbound links and attached authentic visual evidence.
+
+### Constraints & Standards
+1. **Posting Frequency**: Exactly 1 post per day (evening prime time window).
+2. **Tone**: Objective, dry, factual analysis. Never use boilerplate greetings like 'Slowpoque на зв\'язку'. Focus on causes, numbers, and consequences (e.g. how disabling border cell towers reduced air raid alerts).
+3. **Link Policy**: Strictly ZERO outbound links (no URLs in body or comments) to prevent Threads algorithmic penalization.
+4. **Length**: Strictly under 500 characters.
+5. **State & History**: Managed via scripts/autopilot_state.json. Prevents duplicate postings.
+
+### Autopilot CLI Execution
+`powershell
+# Check current autopilot eligibility and next top candidate
+python agentic-skills/skills/zelta-publisher-skill/scripts/autopilot_slowpoque.py --status
+
+# Preview candidate selection and analytical rewrite
+python agentic-skills/skills/zelta-publisher-skill/scripts/autopilot_slowpoque.py --preview
+
+# Run daily autopilot (respects once-daily constraint)
+python agentic-skills/skills/zelta-publisher-skill/scripts/autopilot_slowpoque.py --run
+
+# Force run (bypasses once-daily limit if needed)
+python agentic-skills/skills/zelta-publisher-skill/scripts/autopilot_slowpoque.py --force
+`

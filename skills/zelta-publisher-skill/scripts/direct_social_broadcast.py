@@ -142,12 +142,13 @@ def main():
 
     if args.target in ["all", "slowpoque"]:
         creds = load_slowpoque_credentials()
-        if creds and creds.get("access_token") and creds.get("user_id"):
+        th_user_id = creds.get("user_id") or creds.get("threads_user_id") if creds else None
+        if creds and creds.get("access_token") and th_user_id:
             print("Publishing analytical take to @slowpoque618 on Threads...")
             th_text = args.threads_text or args.text
             th_res = publish_to_threads_direct(
                 token=creds["access_token"],
-                user_id=creds["user_id"],
+                user_id=th_user_id,
                 text=th_text,
                 image_url=args.image_url
             )
