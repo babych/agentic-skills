@@ -44,15 +44,16 @@ When the user provides a news snippet, tweet, screenshot, or URL, evaluate the i
 ## 📰 Mode 1: Editorial Priority Queue (DEFAULT WORKFLOW)
 
 ### Core Principle
-By default, the Cloudflare Worker runs an autonomous cron job every hour (`0 * * * *`) that picks generic news from RSS feeds.
+By default, the Google Cloud Run C# agent (`zelta-news-agent`) runs an autonomous cron job every hour (`0 * * * *`) via Google Cloud Scheduler that checks for pending editorial items and picks top stories.
 Whenever the user invokes `/zelta-publisher-skill` with a story topic, URL, or news snippet, **ALWAYS add it to the Editorial Priority Queue** (`editorial_queue` in D1 `pulsepress-news-db`).
 
 On the next cron trigger:
-1. The worker detects the pending queue item before any RSS feeds.
+1. The Cloud Run agent detects the pending queue item.
 2. It generates a full-length, authoritative 5-language investigation (`uk`, `en`, `pl`, `de`, `es`) with concrete numbers, facts, and structure.
-3. Media is attached (or Wikimedia resolved).
-4. Persisted to D1 and marked `completed`.
-5. Google Indexing API pinged (< 1s) and syndicated across social channels (Telegram, Threads, Bluesky, Facebook).
+3. The Critic Agent reviews and verifies Zero-Links and character constraints.
+4. Media is attached (or Wikimedia resolved).
+5. Persisted to D1 and marked `completed`.
+6. Google Indexing API pinged (< 1s) and syndicated across social channels (Telegram, Threads, Bluesky, Facebook).
 
 ### Enqueue Execution
 Run `scripts/enqueue_editorial.py`:
