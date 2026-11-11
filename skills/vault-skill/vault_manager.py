@@ -336,18 +336,23 @@ class VaultManager:
         return secrets[key_name]
 
 
-def resolve_pin(arg_pin: Optional[str] = None, prompt_user: bool = False, try_stdin: bool = True) -> str:
-    """
-    Safely resolves the Master PIN without requiring CLI command-line parameters.
-    Priority order:
-    1. Direct CLI argument (--pin) - fallback / legacy
-    2. VAULT_PIN environment variable
-    3. Standard input stream (only if try_stdin=True)
-    4. Interactive secure password prompt (getpass, only if prompt_user=True)
+def _has_stdin_data() -> bool:
+    if sys.stdin.isatty():
+        return False
+    try:
+        import msvcrt
+        handle = msvcrt.get_osfhandle(sys.stdin.fileno())
+        avail = wintypes.DWORD()
+        res = ctypes.windll.kernel32.PeekNamedPipe(handle, None, 0, None, ctypes.byref(avail), None)
+        return bool(res and avail.value > 0)
+    except Exception:
+        return False
 
-    Set try_stdin=False when another function (e.g. _read_value_safely) also
-    needs to read from stdin in the same invocation.
-    """
+
+def resolve_pin(arg_pin: Optional[str] = None, prompt_user: bool = False, try_stdin: bool = True, is_pin_configured: bool = True) -> str:
+    if not is_pin_configured:
+        return ""
+
     if arg_pin:
         return arg_pin.strip()
 
@@ -355,23 +360,18 @@ def resolve_pin(arg_pin: Optional[str] = None, prompt_user: bool = False, try_st
     if env_pin:
         return env_pin.strip()
 
-    # Check if input is piped through stdin
-    if try_stdin and not sys.stdin.isatty():
+    if try_stdin and _has_stdin_data():
         piped = sys.stdin.read().strip()
         if piped:
             return piped
 
-    if prompt_user:
+    if prompt_user and sys.stdin.isatty():
         return getpass.getpass("Enter Master PIN: ").strip()
 
     return ""
 
 
 def _read_value_safely(arg_value: Optional[str]) -> str:
-    """
-    Read the secret value from the CLI arg, VAULT_SECRET_VALUE env var, or stdin.
-    Prevents the actual secret from appearing in process argument lists.
-    """
     if arg_value is not None:
         return arg_value
 
@@ -379,13 +379,15 @@ def _read_value_safely(arg_value: Optional[str]) -> str:
     if env_val:
         return env_val
 
-    if not sys.stdin.isatty():
+    if _has_stdin_data():
         piped = sys.stdin.read().strip()
         if piped:
             return piped
 
-    # Interactive fallback
-    return getpass.getpass("Enter secret value: ")
+    if sys.stdin.isatty():
+        return getpass.getpass("Enter secret value: ")
+
+    return ""
 
 
 def main():
@@ -433,25 +435,25 @@ def main():
 
     try:
         if args.command == "set-pin":
-            pin = resolve_pin(args.pin, prompt_user=True)
+            pin = resolve_pin(args.pin, prompt_user=True, is_pin_configured=True)
             if not pin:
                 print("[ERROR] Master PIN cannot be empty.", file=sys.stderr)
                 sys.exit(1)
             vm.set_pin(pin)
 
         elif args.command == "rotate-pin":
-            old_pin = args.old_pin or resolve_pin(prompt_user=True)
+            old_pin = args.old_pin or resolve_pin(prompt_user=True, is_pin_configured=True)
             if not old_pin:
                 print("[ERROR] Current PIN cannot be empty.", file=sys.stderr)
                 sys.exit(1)
-            new_pin = args.new_pin or getpass.getpass("Enter new Master PIN: ").strip()
+            new_pin = args.new_pin or (getpass.getpass("Enter new Master PIN: ").strip() if sys.stdin.isatty() else "")
             if not new_pin:
                 print("[ERROR] New PIN cannot be empty.", file=sys.stderr)
                 sys.exit(1)
             vm.rotate_pin(old_pin, new_pin)
 
         elif args.command == "set":
-            pin = resolve_pin(args.pin, prompt_user=False, try_stdin=False)
+            pin = resolve_pin(args.pin, prompt_user=False, try_stdin=False, is_pin_configured=vm.is_pin_set())
             value = _read_value_safely(args.value)
             if not value:
                 print("[ERROR] Secret value cannot be empty.", file=sys.stderr)
@@ -459,13 +461,12 @@ def main():
             vm.set_secret(args.key, value, args.desc, args.scope, pin)
 
         elif args.command == "get":
-            pin = resolve_pin(args.pin, prompt_user=False)
+            pin = resolve_pin(args.pin, prompt_user=False, is_pin_configured=vm.is_pin_set())
             val = vm.get_secret(args.key, pin)
-            # Output directly to stdout for shell evaluation
             sys.stdout.write(val)
 
         elif args.command == "delete":
-            pin = resolve_pin(args.pin, prompt_user=False)
+            pin = resolve_pin(args.pin, prompt_user=False, is_pin_configured=vm.is_pin_set())
             vm.delete_secret(args.key, pin)
 
         elif args.command == "list":
